@@ -42,6 +42,7 @@ setup(
     packages=["cybele", "cybele.test"],
     package_data={"cybele": [
                     "templates/*.html",
+                    "templates/*.j2",
                     "static/*.css",
                     ]},
     tests_require=[
