@@ -5,6 +5,7 @@ from collections import namedtuple
 from email import message_from_string
 from email.mime.text import MIMEText
 import glob
+import operator
 import os.path
 
 Summary = namedtuple("Summary", ["name", "lines", "tail"])
@@ -16,9 +17,11 @@ def put_summary(src, dst):
             out.write(summary2text(summarize(log)))
             out.flush()
 
+
 def summarize(fObj):
     entries = [i.strip() for i in fObj.readlines()]
     return Summary(fObj.name, len(entries), entries[-4:])
+
 
 def summary2text(smry):
     msg = MIMEText('\n'.join(smry.tail))
@@ -26,22 +29,30 @@ def summary2text(smry):
     msg["lines"] = str(smry.lines)
     return msg.as_string()
 
+
 def text2summary(txt):
     msg = message_from_string(txt)
     name = msg["name"]
     lines = int(msg["lines"])
-    return Summary(name, lines, msg.get_payload().splitlines()) 
+    return Summary(name, lines, msg.get_payload().splitlines())
+
 
 def history(locn, chan):
     """List summary files for this channel, newest first"""
-    pass
+    pttrn = os.path.join(locn, "*{}".format(suffix(chan)))
+    stats = [(os.path.getmtime(fP), fP) for fP in glob.glob(pttrn)]
+    stats.sort(key=operator.itemgetter(0), reverse=True)
+    return [i[1] for i in stats]
+
 
 def suffix(chan):
     return "-{:02}.dat".format(chan)
 
+
 def get_channels(locn):
     pttrn = os.path.join(locn, "*-??.dat")
     return sorted({int(i[-6:-4]) for i in glob.glob(pttrn)})
+
 
 def get_summary(locn, chan):
     """

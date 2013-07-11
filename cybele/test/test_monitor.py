@@ -1,11 +1,13 @@
 #!/usr/bin/env python2.7
 # encoding: UTF-8
 
+from collections import deque
 import datetime
 import os
 import shutil
 from StringIO import StringIO
 import tempfile
+import time
 import timeit
 import unittest
 import unittest as functest
@@ -13,6 +15,7 @@ import unittest as functest
 from jinja2 import Environment, PackageLoader
 
 from cybele.monitor import get_channels
+from cybele.monitor import history
 from cybele.monitor import put_summary
 from cybele.monitor import suffix
 from cybele.monitor import summarize
@@ -45,6 +48,7 @@ class SummaryTests(unittest.TestCase):
         self.assertEqual(4, len(rv.tail))
         self.assertEqual(log.getvalue().splitlines()[-4:], rv.tail)
 
+
 class SerializerTests(unittest.TestCase):
 
     def test_string_content(self):
@@ -59,6 +63,7 @@ class SerializerTests(unittest.TestCase):
         log = ipsum_log("1K_log", 1024)
         s = summarize(log)
         self.assertEqual(s, text2summary(summary2text(s)))
+
 
 class DeliveryTests(functest.TestCase):
 
@@ -91,14 +96,15 @@ class DeliveryTests(functest.TestCase):
     def test_channel_history(self):
         locn = tempfile.mkdtemp()
         try:
+            hist = deque()
             for i in range(32):
-                tempfile.mkstemp(suffix=suffix(0), dir=locn)
-                self.assertEqual(range(i+1), get_channels(locn))
-            for n, fP in enumerate(os.listdir(locn)):
-                os.remove(os.path.join(locn, fP))
-                self.assertEqual(31-n, len(get_channels(locn)))
+                fD, fN = tempfile.mkstemp(suffix=suffix(0), dir=locn)
+                hist.appendleft(os.path.join(locn, fN))
+                self.assertEqual(list(hist), history(locn, 0))
+                time.sleep(0.1)
         finally:
             shutil.rmtree(locn)
+
 
 class UtilityTests(unittest.TestCase):
 
@@ -106,6 +112,7 @@ class UtilityTests(unittest.TestCase):
         self.assertEqual("-00.dat", suffix(0))
         self.assertEqual("-09.dat", suffix(9))
         self.assertEqual("-10.dat", suffix(10))
+
 
 @functest.skip("Require test data files")
 class TimingTests(functest.TestCase):
@@ -116,7 +123,7 @@ class TimingTests(functest.TestCase):
         than to summarize it. Keeping here for when we
         have test data in static files.
         """
-        
+
         def build_biglog():
             globals()["bigLog"] = ipsum_log("bigLog", 1E6)
 
