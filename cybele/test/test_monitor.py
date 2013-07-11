@@ -34,7 +34,7 @@ class SummaryTests(functest.TestCase):
     def test_summary(self):
         log = ipsum_log("1K_log", 1024)
         rv = summarize(log)
-        self.assertEqual("1K_log",rv.name)
+        self.assertEqual("1K_log", rv.name)
         self.assertEqual(4, len(rv.tail))
         self.assertEqual(log.getvalue().splitlines()[-4:], rv.tail)
 
@@ -52,6 +52,11 @@ class SerializerTests(functest.TestCase):
         log = ipsum_log("1K_log", 1024)
         s = summarize(log)
         self.assertEqual(s, text2summary(summary2text(s)))
+
+class DeliveryTests(functest.TestCase):
+
+    def test_summary_delivery(self):
+        self.fail()
 
 @functest.skip("Require test data files")
 class TimingTests(functest.TestCase):
