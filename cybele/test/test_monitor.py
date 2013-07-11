@@ -2,14 +2,19 @@
 # encoding: UTF-8
 
 import datetime
+import os
+import shutil
 from StringIO import StringIO
 import tempfile
 import timeit
+import unittest
 import unittest as functest
 
 from jinja2 import Environment, PackageLoader
 
-from cybele.monitor import logsummary
+from cybele.monitor import get_channels
+from cybele.monitor import put_summary
+from cybele.monitor import suffix
 from cybele.monitor import summarize
 from cybele.monitor import summary2text
 from cybele.monitor import text2summary
@@ -26,7 +31,7 @@ def ipsum_log(name, n=16):
     return rv
 
 
-class SummaryTests(functest.TestCase):
+class SummaryTests(unittest.TestCase):
 
     def test_generation_of_log(self):
         log = ipsum_log("hundred", 100)
@@ -40,7 +45,7 @@ class SummaryTests(functest.TestCase):
         self.assertEqual(4, len(rv.tail))
         self.assertEqual(log.getvalue().splitlines()[-4:], rv.tail)
 
-class SerializerTests(functest.TestCase):
+class SerializerTests(unittest.TestCase):
 
     def test_string_content(self):
         log = ipsum_log("1K_log", 1024)
@@ -64,12 +69,43 @@ class DeliveryTests(functest.TestCase):
             fakeLog.flush()
 
             with tempfile.NamedTemporaryFile() as dst:
-                logsummary(fakeLog.name, dst.name)
+                put_summary(fakeLog.name, dst.name)
 
                 content = dst.read()
                 smry = text2summary(content)
                 self.assertEqual(fakeLog.name, smry.name)
                 self.assertEqual(1024, smry.lines)
+
+    def test_channel_naming(self):
+        locn = tempfile.mkdtemp()
+        try:
+            for i in range(32):
+                tempfile.mkstemp(suffix=suffix(i), dir=locn)
+                self.assertEqual(range(i+1), get_channels(locn))
+            for n, fP in enumerate(os.listdir(locn)):
+                os.remove(os.path.join(locn, fP))
+                self.assertEqual(31-n, len(get_channels(locn)))
+        finally:
+            shutil.rmtree(locn)
+
+    def test_channel_history(self):
+        locn = tempfile.mkdtemp()
+        try:
+            for i in range(32):
+                tempfile.mkstemp(suffix=suffix(0), dir=locn)
+                self.assertEqual(range(i+1), get_channels(locn))
+            for n, fP in enumerate(os.listdir(locn)):
+                os.remove(os.path.join(locn, fP))
+                self.assertEqual(31-n, len(get_channels(locn)))
+        finally:
+            shutil.rmtree(locn)
+
+class UtilityTests(unittest.TestCase):
+
+    def test_zero_packing_of_suffixes(self):
+        self.assertEqual("-00.dat", suffix(0))
+        self.assertEqual("-09.dat", suffix(9))
+        self.assertEqual("-10.dat", suffix(10))
 
 @functest.skip("Require test data files")
 class TimingTests(functest.TestCase):
