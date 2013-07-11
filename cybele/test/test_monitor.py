@@ -3,11 +3,13 @@
 
 import datetime
 from StringIO import StringIO
+import tempfile
 import timeit
 import unittest as functest
 
 from jinja2 import Environment, PackageLoader
 
+from cybele.monitor import logsummary
 from cybele.monitor import summarize
 from cybele.monitor import summary2text
 from cybele.monitor import text2summary
@@ -56,7 +58,18 @@ class SerializerTests(functest.TestCase):
 class DeliveryTests(functest.TestCase):
 
     def test_summary_delivery(self):
-        self.fail()
+        log = ipsum_log(None, 1024)
+        with tempfile.NamedTemporaryFile() as fakeLog:
+            fakeLog.write(log.getvalue())
+            fakeLog.flush()
+
+            with tempfile.NamedTemporaryFile() as dst:
+                logsummary(fakeLog.name, dst.name)
+
+                content = dst.read()
+                smry = text2summary(content)
+                self.assertEqual(fakeLog.name, smry.name)
+                self.assertEqual(1024, smry.lines)
 
 @functest.skip("Require test data files")
 class TimingTests(functest.TestCase):

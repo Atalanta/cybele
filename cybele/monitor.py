@@ -8,6 +8,11 @@ from email.mime.text import MIMEText
 Summary = namedtuple("Summary", ["name", "lines", "tail"])
 
 
+def logsummary(src, dst):
+    with open(src, 'r') as log:
+        with open(dst, 'w') as out:
+            out.write(summary2text(summarize(log)))
+
 def summarize(fObj):
     entries = [i.strip() for i in fObj.readlines()]
     return Summary(fObj.name, len(entries), entries[-4:])
