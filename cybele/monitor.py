@@ -6,18 +6,19 @@ from collections import namedtuple
 from email import message_from_string
 from email.mime.text import MIMEText
 import glob
+from multiprocessing.pool import ThreadPool
 import operator
 import os.path
 import sys
+import tempfile
+import time
 
 DFLT_LOCN = os.path.expanduser(os.path.join("~", ".cybele"))
 
 __doc__ = """
 The `monitor` module runs as a continuing process which reads a
 number of log files. It produces a summary of each and places the
-summary in a configured location. To see possible options::
-
-    monitor.py --help
+summary in a configured location.
 
 The module also defines two API functions to access the summary
 files:
@@ -110,12 +111,48 @@ def get_summary(locn, chan):
     return rv
 
 
+def monitor((args, chan, src)):
+    while True:
+        fD, fN = tempfile.mkstemp(suffix=suffix(chan), dir=args.output)
+        put_summary(src, os.path.join(args.output, fN))
+        os.close(fD)
+        get_summary(args.output, chan)  # purges previous summaries
+        time.sleep(1)
+
+
 def main(args):
+
+    # Prerequisites for monitoring
+    if not args.input:
+        return 2
+    else:
+        try:
+            os.mkdir(args.output)
+        except OSError:
+            pass
+        finally:
+            if not os.path.isdir(args.output):
+                return 1
+
+    # Bug in ThreadPool means ^C ineffective. Use ^\ instead
+    pool = ThreadPool(len(args.input))
+    pool.map(monitor, [(args, n, src) for (n, src) in enumerate(args.input)])
+    pool.close()
+    pool.terminate()
+    pool.join()
     return 0
 
 
 def parser():
-    rv = argparse.ArgumentParser(__doc__)
+    rv = argparse.ArgumentParser(
+        epilog=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+    rv.add_argument(
+        "input", nargs="*",
+        help="absolute file path(s) of the log(s) to be watched")
+    rv.add_argument(
+        "--output", default=DFLT_LOCN,
+        help="path to output directory [{}]".format(DFLT_LOCN))
     return rv
 
 
