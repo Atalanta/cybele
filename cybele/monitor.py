@@ -1,12 +1,16 @@
 #!/usr/bin/env python2.7
 # encoding: UTF-8
 
+import argparse
 from collections import namedtuple
 from email import message_from_string
 from email.mime.text import MIMEText
 import glob
 import operator
 import os.path
+import sys
+
+DFLT_LOCN = os.path.expanduser(os.path.join("~", ".cybele"))
 
 __doc__ = """
 The `monitor` module runs as a continuing process which reads a
@@ -104,3 +108,22 @@ def get_summary(locn, chan):
                 except:
                     continue
     return rv
+
+
+def main(args):
+    return 0
+
+
+def parser():
+    rv = argparse.ArgumentParser(__doc__)
+    return rv
+
+
+def run():
+    p = parser()
+    args = p.parse_args()
+    rv = main(args)
+    sys.exit(rv)
+
+if __name__ == "__main__":
+    run()
