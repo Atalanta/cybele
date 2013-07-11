@@ -8,22 +8,25 @@ import glob
 import operator
 import os.path
 
+__doc__ = """
+The `monitor` module runs as a continuing process which reads a
+number of log files. It produces a summary of each and places the
+summary in a configured location. To see possible options::
+
+    monitor.py --help
+
+The module also defines two API functions to access the summary
+files:
+
+    * get_channels
+    * get_summary
+"""
+
 Summary = namedtuple("Summary", ["name", "lines", "tail"])
 
 
-def put_summary(src, dst):
-    with open(src, 'r') as log:
-        with open(dst, 'w') as out:
-            out.write(summary2text(summarize(log)))
-            out.flush()
-
-
-def summarize(fObj):
-    entries = [i.strip() for i in fObj.readlines()]
-    return Summary(fObj.name, len(entries), entries[-4:])
-
-
 def summary2text(smry):
+    """Return a text representation of a Summary object"""
     msg = MIMEText('\n'.join(smry.tail))
     msg["name"] = smry.name
     msg["lines"] = str(smry.lines)
@@ -31,10 +34,29 @@ def summary2text(smry):
 
 
 def text2summary(txt):
+    """Return a summary object from its text representation"""
     msg = message_from_string(txt)
     name = msg["name"]
     lines = int(msg["lines"])
     return Summary(name, lines, msg.get_payload().splitlines())
+
+
+def summarize(fObj):
+    """Return a summary object from a log file"""
+    entries = [i.strip() for i in fObj.readlines()]
+    return Summary(fObj.name, len(entries), entries[-4:])
+
+
+def put_summary(src, dst):
+    """Place at `dst` a text summary of the log file `src`"""
+    with open(src, 'r') as log:
+        with open(dst, 'w') as out:
+            out.write(summary2text(summarize(log)))
+            out.flush()
+
+
+def suffix(chan):
+    return "-{:02}.dat".format(chan)
 
 
 def history(locn, chan):
@@ -45,11 +67,11 @@ def history(locn, chan):
     return [i[1] for i in stats]
 
 
-def suffix(chan):
-    return "-{:02}.dat".format(chan)
-
-
 def get_channels(locn):
+    """
+    Return a list of log channels for which there are summary
+    files available.
+    """
     pttrn = os.path.join(locn, "*-??.dat")
     return sorted({int(i[-6:-4]) for i in glob.glob(pttrn)})
 
@@ -67,3 +89,18 @@ def get_summary(locn, chan):
     recent. Finally, we remove files older than the one we
     just successfully read.
     """
+    rv = None
+    hist = history(locn, chan)
+    for n, path in enumerate(hist):
+        try:
+            with open(path, 'r') as in_:
+                rv = text2summary(in_.read())
+        except:
+            continue
+        else:
+            for past in hist[n+1:]:
+                try:
+                    os.remove(past)
+                except:
+                    continue
+    return rv

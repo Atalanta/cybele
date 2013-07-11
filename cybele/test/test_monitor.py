@@ -15,6 +15,7 @@ import unittest as functest
 from jinja2 import Environment, PackageLoader
 
 from cybele.monitor import get_channels
+from cybele.monitor import get_summary
 from cybele.monitor import history
 from cybele.monitor import put_summary
 from cybele.monitor import suffix
@@ -68,7 +69,7 @@ class SerializerTests(unittest.TestCase):
 class DeliveryTests(functest.TestCase):
 
     def test_summary_delivery(self):
-        log = ipsum_log(None, 1024)
+        log = ipsum_log("", 1024)
         with tempfile.NamedTemporaryFile() as fakeLog:
             fakeLog.write(log.getvalue())
             fakeLog.flush()
@@ -93,15 +94,27 @@ class DeliveryTests(functest.TestCase):
         finally:
             shutil.rmtree(locn)
 
-    def test_channel_history(self):
+    def test_channel_file_rotation(self):
         locn = tempfile.mkdtemp()
         try:
+            s = None
             hist = deque()
-            for i in range(32):
+            for i in range(8):
+                # Populate the locn with summaries for channel 0
+                s = summarize(ipsum_log("", 1024))
                 fD, fN = tempfile.mkstemp(suffix=suffix(0), dir=locn)
+                os.write(fD, summary2text(s))
                 hist.appendleft(os.path.join(locn, fN))
+
+                # Test history is reported properly
                 self.assertEqual(list(hist), history(locn, 0))
                 time.sleep(0.1)
+
+            # get_summary should return the most recent
+            self.assertEqual(s, get_summary(locn, 0))
+
+            # as a side-effect, there are no old files in locn
+            self.assertEqual(1, len(os.listdir(locn)))
         finally:
             shutil.rmtree(locn)
 
