@@ -9,6 +9,8 @@ import unittest as functest
 from jinja2 import Environment, PackageLoader
 
 from cybele.monitor import summarize
+from cybele.monitor import summary2text
+from cybele.monitor import text2summary
 
 
 def ipsum_log(name, n=16):
@@ -25,17 +27,33 @@ def ipsum_log(name, n=16):
 class SummaryTests(functest.TestCase):
 
     def test_generation_of_log(self):
-        log = ipsum_log("log_one", 100)
-        self.failUnlessEqual("log_one", log.name)
+        log = ipsum_log("hundred", 100)
+        self.failUnlessEqual("hundred", log.name)
         self.failUnlessEqual(100, len(log.readlines()))
 
     def test_summary(self):
-        log = ipsum_log("log_two", 1024)
+        log = ipsum_log("1K_log", 1024)
         rv = summarize(log)
+        self.assertEqual("1K_log",rv.name)
         self.assertEqual(4, len(rv.tail))
-        self.assertEqual(log.getvalue().splitlines(True)[-4:], rv.tail)
+        self.assertEqual(log.getvalue().splitlines()[-4:], rv.tail)
 
-@functest.skip("No test data files")
+class SerializerTests(functest.TestCase):
+
+    def test_string_content(self):
+        log = ipsum_log("1K_log", 1024)
+        s = summarize(log)
+        txt = summary2text(s)
+        self.assertIn("name: 1K_log", txt)
+        self.assertIn("lines: 1024", txt)
+        self.assertIn('\n'.join(s.tail), txt)
+
+    def test_round_trip(self):
+        log = ipsum_log("1K_log", 1024)
+        s = summarize(log)
+        self.assertEqual(s, text2summary(summary2text(s)))
+
+@functest.skip("Require test data files")
 class TimingTests(functest.TestCase):
 
     def test_round_robin(self):
