@@ -3,6 +3,7 @@
 
 import datetime
 from StringIO import StringIO
+import timeit
 import unittest as functest
 
 from jinja2 import Environment, PackageLoader
@@ -12,7 +13,7 @@ from cybele.monitor import summarize
 
 def ipsum_log(name, n=16):
     now = datetime.datetime.utcnow()
-    ts = (now - datetime.timedelta(seconds=i) for i in range(n))
+    ts = (now - datetime.timedelta(seconds=i) for i in range(int(n)))
     env = Environment(
         loader=PackageLoader("cybele", "templates"))
     tmplt = env.get_template("ipsumlog.j2")
@@ -34,6 +35,24 @@ class SummaryTests(functest.TestCase):
         self.assertEqual(4, len(rv.tail))
         self.assertEqual(log.getvalue().splitlines(True)[-4:], rv.tail)
 
+@functest.skip("No test data files")
+class TimingTests(functest.TestCase):
+
+    def test_round_robin(self):
+        """
+        Not worth running; takes longer to generate data
+        than to summarize it. Keeping here for when we
+        have test data in static files.
+        """
+        
+        def build_biglog():
+            globals()["bigLog"] = ipsum_log("bigLog", 1E6)
+
+        def summarize_biglog():
+            summarize(bigLog)
+
+        t = timeit.timeit(summarize_biglog, build_biglog)
+        print(t)
 
 if __name__ == "__main__":
     functest.main()
