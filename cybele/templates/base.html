@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
+<meta http-equiv="refresh" content="2" />
 <title>Cybele monitor</title>
 </head>
 <body>
@@ -14,6 +15,16 @@
     </ul>
   {% endif %}
 {% endwith %}
-<p>Hello from Cybele</p>
+{% for chan, summary in summaries -%}
+    <dl>
+    <dt>Log</dt><dd>{{ summary.name }}</dd>
+    <dt>Lines</dt><dd>{{ summary.lines }}</dd>
+    </dl>
+    <p>
+    {% for line in summary.tail -%}
+    <tt>{{ line }}</tt>
+    {% endfor -%}
+    </p>
+{% endfor %}
 </body>
 </html>
