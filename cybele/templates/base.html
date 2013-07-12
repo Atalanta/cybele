@@ -4,6 +4,54 @@
 <meta charset="UTF-8" />
 <meta http-equiv="refresh" content="2" />
 <title>Cybele monitor</title>
+<style>
+body {
+font-family: Cabin, Helvetica, Arial, sans-serif;
+margin: 1.5em;
+}
+
+.channel {
+background-color: silver;
+border-radius:25px;
+margin-bottom: 1em;
+padding: 1em 0 1em 2em;
+}
+
+.channel h1 {
+color: ghostwhite;
+float: right;
+font-size: 5em;
+font-weight: normal;
+padding-right: 0.5em;
+position: relative;
+z-index: 1;
+}
+
+.channel dt {
+color: white;
+display: inline;
+}
+
+.channel dd {
+color: dimgray;
+display: inline;
+font-weight: bold;
+}
+
+.channel dt:after {
+content: ':';
+}
+
+.channel dd:after {
+content: '\A';
+white-space: pre;
+}
+
+.channel tt {
+color: darkslategray;
+z-index: 2;
+}
+</style>
 </head>
 <body>
 {%with messages = get_flashed_messages(with_categories=true) %}
@@ -16,15 +64,18 @@
   {% endif %}
 {% endwith %}
 {% for chan, summary in summaries -%}
+<div class="channel" id="{{ '%02d'|format(chan) }}">
+    <h1>{{ '%02d'|format(chan) }}</h1>
     <dl>
     <dt>Log</dt><dd>{{ summary.name }}</dd>
     <dt>Lines</dt><dd>{{ summary.lines }}</dd>
     </dl>
     <p>
     {% for line in summary.tail -%}
-    <tt>{{ line }}</tt>
+    <tt>{{ line }}</tt><br />
     {% endfor -%}
     </p>
+</div>
 {% endfor %}
 </body>
 </html>
