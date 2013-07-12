@@ -1,0 +1,10 @@
+CHECKLIST: ([>] - in progress, [x] - done, [%] - cancelled, [?] - contingency)
+[x] Derisk Flask app
+[x] Establish git repo, project structure, setup.py
+[x] Create or obtain test files
+[x] Log scan scheduler
+[x] Establish summary format
+[x] Front end HTML and styling
+[?] Specialise summaries for each log format
+[ ] Package for Windows
+[ ] Acceptance test on Windows 2000
