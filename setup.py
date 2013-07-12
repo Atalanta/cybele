@@ -32,7 +32,7 @@ setup(
     url="http://atalanta-systems.com",
     long_description=__doc__,
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "License :: Other/Proprietary License",
         "Operating System :: Microsoft :: Windows :: Windows NT/2000",
         "Operating System :: POSIX :: Linux",
@@ -49,11 +49,12 @@ setup(
         "Jinja2>=2.7",
         ],
     install_requires=[
-        "Flask==0.10.1",
+        "Flask>=0.10.1",
         ],
     entry_points={
         "console_scripts": [
-        "cybele-viewer = cybele.main:run"
+        "cybele-monitor = cybele.monitor:run",
+        "cybele-viewer = cybele.viewer:run"
         ],
     },
     zip_safe=False

@@ -14,7 +14,7 @@ from flask import flash
 from flask import render_template
 
 __doc__ = """
-The `main` module runs as a web service on your local host.
+The `viewer` module runs as a web service on your local host.
 It displays the summaries of monitored files.
 """
 
